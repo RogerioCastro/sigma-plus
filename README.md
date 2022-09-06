@@ -2,6 +2,8 @@
 
 [Sigma 2](https://github.com/jacomyal/sigma.js) com algumas funcionalidades já integradas.
 
+[https://rogeriocastro.github.io/sigma-plus/](https://rogeriocastro.github.io/sigma-plus/)
+
 <p align="center"><img src="https://raw.githubusercontent.com/RogerioCastro/sigma-plus/main/dist/example.png"></p>
 
 > Veja uma **demonstração** da biblioteca, baixando o conteúdo do diretório [`/dist`](/dist) e rodando o arquivo `index.html` (de preferência com [http-server](https://github.com/http-party/http-server)).
