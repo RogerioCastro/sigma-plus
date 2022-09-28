@@ -8,6 +8,7 @@ import createEventHub from './util/createEventHub'
 import isHTMLElement from './util/isHTMLElement'
 import linearScale from './util/linearScale'
 import getExtent from './util/extent'
+import omit from './util/omit'
 import './styles/main.scss'
 
 /**
@@ -156,33 +157,36 @@ export default function SigmaPlus(options) {
     // Criando os nós: lendo a extensão dos tamanhos, criando a função de escala e inserindo
     // o objeto formato no modelo de grafo
     const { minNodeSize, maxNodeSize } = settings
-    nodesExtent = getExtent(data.nodes.map(n => n.attributes.size !== 'undefined' ? Number(n.attributes.size) : 1))
+    nodesExtent = getExtent(data.nodes.map(n => n.attributes?.size || n.size || 1))
     nodeScale = linearScale(nodesExtent, [minNodeSize, maxNodeSize])
     data.nodes.forEach((n, index) => {
-      // Atribuindo um tamanho arbitrário, caso não haja
-      const size = n.attributes.size || 1
-      components.graph.addNode(n.key, {
-        ...n.attributes,
+      // Atribuindo um tamanho arbitrário, caso não haja (sobrescreve valor 0)
+      const size = n.attributes?.size || n.size || 1
+      components.graph.addNode(n.key ?? n.id, {
+        ...(n.attributes ?? {}),
+        ...(n.position ? { x: n.position.x, y: n.position.y } : {}),
+        ...omit(['key', 'id', 'attributes'], n), // caso os atributos estejam na rais do objeto
         index,
         size: nodeScale(size),
         originalSize: size,
-        originalColor: n.attributes.color || sigmaSettings.defaultNodeColor
+        originalColor: n.attributes?.color ?? n.color ?? sigmaSettings.defaultNodeColor
       })
     })
     // Criando as arestas: lendo a extensão dos pesos, criando a função de escala e inserindo
     // o objeto formato no modelo de grafo
     const { minEdgeSize, maxEdgeSize } = settings
-    edgesExtent = getExtent(data.edges.map(e => e.attributes.size ? Number(e.attributes.size) : e.attributes.weight ? e.attributes.weight : 1))
+    edgesExtent = getExtent(data.edges.map(e => e.attributes?.size || e.attributes?.weight || e.size || e.weight || settings.defaultEdgeSize))
     edgeScale = linearScale(edgesExtent, [minEdgeSize, maxEdgeSize])
     data.edges.forEach((e, index) => {
-      // Atribuindo um peso arbitrário, caso não haja
-      const size = e.attributes.size || e.attributes.weight || settings.defaultEdgeSize
+      // Atribuindo um peso arbitrário, caso não haja (sobrescreve valor 0)
+      const size = e.attributes?.size || e.attributes?.weight || e.size || e.weight || settings.defaultEdgeSize
       components.graph.mergeEdgeWithKey(`${e.source}->${e.target}`, e.source, e.target, {
-        ...e.attributes,
+        ...(e.attributes ?? {}),
+        ...omit(['key', 'id', 'attributes'], e), // caso os atributos estejam na rais do objeto
         index,
         size: edgeScale(size),
         originalSize: size,
-        originalColor: e.attributes.color || sigmaSettings.defaultEdgeColor
+        originalColor: e.attributes?.color ?? e.color ?? sigmaSettings.defaultEdgeColor
       })
     })
   }
