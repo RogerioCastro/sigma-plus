@@ -34,8 +34,8 @@ Veja o arquivo [`/src/demo.js`](/src/demo.js) para um exemplo de utilização.
 Essa biblioteca foi desenvolvida utilizando [webpack](https://webpack.js.org/) para o empacotamento.
 
 ```bash
-# Dependências
-$ npm install
+# Dependências (sem atualizar versões)
+$ npm ci
 
 # Servidor de desenvolvimento (localhost:9000)
 # Roda o 'index.html' do diretório '/dist'
@@ -44,6 +44,8 @@ $ npm start
 # Build de produção
 $ npm run build
 ```
+
+> **Atenção!** As versões mais recentes da biblioteca Sigma não são mais compatíveis com esta biblioteca.
 
 > O comando `npm run build` irá gerar os arquivos de produção `sigma-plus.min.js` e `demo.min.js`, no diretório [`/dist`](/dist).
 
