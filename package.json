@@ -21,6 +21,7 @@
   "devDependencies": {
     "@popperjs/core": "^2.10.2",
     "css-loader": "^6.5.0",
+    "d3-fetch": "^3.0.1",
     "eslint": "^8.1.0",
     "graphology": "^0.21.1",
     "sass": "^1.43.4",
