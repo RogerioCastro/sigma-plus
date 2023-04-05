@@ -34,8 +34,8 @@ Veja o arquivo [`/src/demo.js`](/src/demo.js) para um exemplo de utilização.
 Essa biblioteca foi desenvolvida utilizando [webpack](https://webpack.js.org/) para o empacotamento.
 
 ```bash
-# Dependências (sem atualizar versões)
-$ npm ci
+# Dependências
+$ npm install
 
 # Servidor de desenvolvimento (localhost:9000)
 # Roda o 'index.html' do diretório '/dist'

@@ -55,7 +55,7 @@ export default function SigmaPlus(options) {
     defaultEdgeColor: '#ccc',
     defaultEdgeType: 'line', // 'line' ou 'arrow'
     labelFont: 'Arial',
-    labelSize: 14,
+    labelSize: 12,
     labelWeight: 'normal',
     edgeLabelFont: 'Arial',
     edgeLabelSize: 14,
@@ -64,12 +64,14 @@ export default function SigmaPlus(options) {
     // Labels
     labelDensity: 0.1,
     labelGridCellSize: 100,
-    labelRenderedSizeThreshold: 2,
+    labelRenderedSizeThreshold: 6,
+    // Features
+    zIndex: true,
+    minCameraRatio: null,
+    maxCameraRatio: null,
     // Reducers
     nodeReducer: nodeReducer,
     edgeReducer: edgeReducer,
-    // Features
-    zIndex: true,
     // Renderers
     hoverRenderer: hoverRenderer,
     labelRenderer: labelRenderer
@@ -95,7 +97,8 @@ export default function SigmaPlus(options) {
   const state = {
     selectedNode: null,
     hoveredNode: null,
-    highlightedNeighbors: new Set()
+    highlightedNeighbors: new Set(),
+    highlightedNodes: new Set()
   }
   // Principais componentes
   const components = {
@@ -239,9 +242,14 @@ export default function SigmaPlus(options) {
 
     // Esmaecendo inicialmente todos os nós quando há highlightedNeighbors ou os que
     // estão fora do highlightedNeighbors
-    if (settings.grayOtherNodes && state.highlightedNeighbors.size && !state.highlightedNeighbors.has(node)) {
+    if (settings.grayOtherNodes && (state.highlightedNeighbors.size || state.highlightedNodes.size)) {
       hideLabel = true
       greyed = true
+    }
+
+    if (state.highlightedNeighbors.has(node) || state.highlightedNodes.has(node)) {
+      hideLabel = false
+      greyed = false
     }
 
     // Destacando os selectedNode ou hoveredNode
@@ -269,11 +277,12 @@ export default function SigmaPlus(options) {
   function edgeReducer (edge, data) {
     let greyed = false
     let hidden = false
+    let node = state.hoveredNode || state.selectedNode
     // Verificando se as arestas devem ser impressas
     if (settings.renderEdges) {
       // Verificando se há nó selecionado ou sobreposto pelo mouse e se a aresta não está ligada
       // a nenhum desses nós
-      if ((state.hoveredNode || state.selectedNode) && (!components.graph.hasExtremity(edge, state.hoveredNode) && !components.graph.hasExtremity(edge, state.selectedNode))) {
+      if (node && !components.graph.hasExtremity(edge, node)) {
         // Verificando se arestas são ocultas ou simplesmente esmaecidas
         if (settings.grayOtherEdges) {
           greyed = true
@@ -283,6 +292,11 @@ export default function SigmaPlus(options) {
       }
     } else {
       hidden = true
+      // Verificando se há nó selecionado ou sobreposto pelo mouse e se a aresta está ligada
+      // a algum nó selecionado ou sobreposto
+      if (node && components.graph.hasExtremity(edge, node)) {
+        hidden = false
+      }
     }
 
     return {
@@ -399,21 +413,19 @@ export default function SigmaPlus(options) {
   }
 
   /**
-   * Destaca um nó, usando o hoverNode()
-   * @param {String} node ID do nó
+   * Destaca um ou mais nós ou retira o destaque quando o parâmetro nodeIds não é informado
+   * @param {string[]} nodeIds IDs dos nós. Default: null
    */
-  function highlight (node) {
-    if (!node || node === state.hoveredNode) {
-      return
+  function highlight (nodeIds = null, render = true) {
+    if (nodeIds === null || nodeIds.length === 0) {
+      state.highlightedNodes.clear()
+      eventHub.emit('unhighlight', null)
+    } else {
+      state.highlightedNodes = new Set(nodeIds)
+      eventHub.emit('highlight', nodeIds)
     }
-    hoverNode(node)
-  }
-
-  /**
-   * Retira o destaca dos nós
-   */
-  function unhighlight () {
-    hoverNode()
+    // Atualizando a renderização
+    render && components.sigma.refresh()
   }
 
   /**
@@ -480,6 +492,7 @@ export default function SigmaPlus(options) {
     if (node === state.selectedNode) {
       return
     }
+    highlight(null, false)
     // Atualizando o nó selecionado
     state.selectedNode = node || null
     // Limpando todos os vizinhos dos últimos nós selecionado ou sobreposto
@@ -562,12 +575,13 @@ export default function SigmaPlus(options) {
    * de posicionamento correto do mouse.
    */
   components.sigma.getMouseCaptor().on('mousemove', (e) => {
+    // console.info('move:', e.original.clientX, e.original.clientY)
     if (components.tooltip) {
       // Margens no elemento <html> podem afetar a posição X da tooltip e devem ser evitadas.
       // Margens laterais no elemento <body> devem ser calculadas.
       const documentStyle = window.getComputedStyle(document.documentElement)
       const marginLeft = Number(documentStyle.marginLeft.replace('px', '')) || 0
-      components.tooltip.handleMousemove({ x: e.clientX + marginLeft, y: e.clientY })
+      components.tooltip.handleMousemove({ x: e.original.clientX + marginLeft, y: e.original.clientY })
     }
   })
   /**
@@ -698,7 +712,6 @@ export default function SigmaPlus(options) {
     selectNode,
     focusNode,
     highlight,
-    unhighlight,
     kill,
     on
   }

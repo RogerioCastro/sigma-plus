@@ -61,6 +61,15 @@ json('example.json')
         // Selecionando e colocando em foco
         sigmaPlus.selectNode('data profiling')
         sigmaPlus.focusNode('data profiling')
+      },
+      highlight: () => {
+        // Destacando alguns nós
+        sigmaPlus.highlight([
+          'information design',
+          'data presentation architecture',
+          'data visualization',
+          'interaction techniques'
+        ])
       }
     }
 
@@ -106,7 +115,7 @@ json('example.json')
         debounce(sigmaPlus.setSetting, 500)('maxEdgeSize', e)
       })
 
-    render.open()
+    // render.open()
 
     const controls = gui.addFolder('Controls')
 
@@ -125,8 +134,11 @@ json('example.json')
     controls
       .add(settings, 'select')
       .name('Select test')
+    controls
+      .add(settings, 'highlight')
+      .name('Highlight')
 
-    controls.open()
+    // controls.open()
   })
   .catch((error) => {
     // eslint-disable-next-line no-console
