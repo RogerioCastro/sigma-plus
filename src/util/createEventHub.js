@@ -4,8 +4,8 @@
  */
 const createEventHub = () => ({
   hub: Object.create(null),
-  emit(event, data) {
-    (this.hub[event] || []).forEach(handler => handler(data))
+  emit(event, ...data) {
+    (this.hub[event] || []).forEach(handler => handler.apply(this, data))
   },
   on(event, handler) {
     if (!this.hub[event]) this.hub[event] = []
