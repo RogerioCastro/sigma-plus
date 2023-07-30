@@ -33,8 +33,9 @@ json('example.json')
       }
     })
 
-    sigmaPlus.on('selectNode', (params) => {
-      console.log('[demo.min.js] selectedNode:', params)
+    sigmaPlus.on('selectNode', (node, event) => {
+      console.log('[demo.min.js] selectedNode:', node)
+      console.log('[demo.min.js] event:', event)
     })
 
     const settings = {

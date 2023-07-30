@@ -455,15 +455,16 @@ export default function SigmaPlus(options) {
 
   /**
    * Manipula o evento mouseenter sobre um nó
-   * @param {String} node ID do nó
+   * @param {string} node ID do nó
+   * @param {object} event Evento sigma
    */
-  function hoverNode (node) {
+  function hoverNode (node = null, event = null) {
     if (node === state.hoveredNode) {
       return
     }
     // Disparando o evento leaveNode e informando qual nó foi deixado
     if (state.hoveredNode && !node) {
-      eventHub.emit('leaveNode', { key: state.hoveredNode, attributes: components.graph.getNodeAttributes(state.hoveredNode) })
+      eventHub.emit('leaveNode', { key: state.hoveredNode, attributes: components.graph.getNodeAttributes(state.hoveredNode) }, event)
     }
     // Atualizando o hoveredNode
     state.hoveredNode = node || null
@@ -478,7 +479,7 @@ export default function SigmaPlus(options) {
     // e disparando o evento hoverNode
     if (state.hoveredNode) {
       state.highlightedNeighbors = new Set([...state.highlightedNeighbors, ...components.graph.neighbors(node)])
-      eventHub.emit('hoverNode', { key: state.hoveredNode, attributes: components.graph.getNodeAttributes(state.hoveredNode) })
+      eventHub.emit('hoverNode', { key: state.hoveredNode, attributes: components.graph.getNodeAttributes(state.hoveredNode) }, event)
     }
     // Atualizando a renderização
     components.sigma.refresh()
@@ -486,9 +487,10 @@ export default function SigmaPlus(options) {
 
   /**
    * Manipula o evento de seleção de um nó (click)
-   * @param {String} node ID do nó
+   * @param {string} node ID do nó
+   * @param {object} event Evento sigma
    */
-  function selectNode (node) {
+  function selectNode (node = null, event = null) {
     if (node === state.selectedNode) {
       return
     }
@@ -500,7 +502,7 @@ export default function SigmaPlus(options) {
     // Armazenando os vizinhos do nó selecionado e disparando o evento selectNode
     if (state.selectedNode) {
       state.highlightedNeighbors = new Set(components.graph.neighbors(node))
-      eventHub.emit('selectNode', { key: state.selectedNode, attributes: components.graph.getNodeAttributes(state.selectedNode) })
+      eventHub.emit('selectNode', { key: state.selectedNode, attributes: components.graph.getNodeAttributes(state.selectedNode) }, event)
     }
     // Atualizando a renderização
     components.sigma.refresh()
@@ -508,11 +510,12 @@ export default function SigmaPlus(options) {
 
   /**
    * Manipula o evento enterNode da Sigma (mouseenter no nó)
-   * @param {String} node ID do nó
+   * @param {string} node ID do nó
+   * @param {object} event Evento sigma
    */
-  function onEnterNode ({ node }) {
+  function onEnterNode ({ node, event }) {
     // Destacando o nó sobreposto
-    hoverNode(node)
+    hoverNode(node, event)
     // Exibindo a tooltip
     const nodeAttributes = components.graph.getNodeAttributes(node)
     components.tooltip.show(settings.tooltipFormatter(nodeAttributes), nodeAttributes.color)
@@ -556,8 +559,8 @@ export default function SigmaPlus(options) {
   /**
    * Trata o evento clickNode da Sigma
    */
-  components.sigma.on('clickNode', ({ node }) => {
-    selectNode(node)
+  components.sigma.on('clickNode', (eData) => {
+    selectNode(eData.node, eData.event)
   })
   /**
    * Trata o evento clickStage da Sigma.
@@ -566,6 +569,7 @@ export default function SigmaPlus(options) {
   components.sigma.on('clickStage', () => {
     selectNode()
     hoverNode()
+    eventHub.emit('clickStage', null)
   })
   /**
    * Trata o evento de movimentação do mouse sobre a Sigma.
