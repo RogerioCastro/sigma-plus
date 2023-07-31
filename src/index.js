@@ -27,6 +27,9 @@ export default function SigmaPlus(options) {
     renderEdges: true,
     greyedNodeColor: '#ebebeb',
     greyedEdgeColor: '#ebebeb',
+    highlightedEdgeColor: null,
+    defaultLabelColor: null,
+    highlightedLabelColor: null,
     minNodeSize: 2,
     maxNodeSize: 10,
     minEdgeSize: 1,
@@ -49,6 +52,9 @@ export default function SigmaPlus(options) {
     hideLabelsOnMove: false,
     renderLabels: true,
     renderEdgeLabels: false,
+    enableEdgeClickEvents: false,
+    enableEdgeWheelEvents: false,
+    enableEdgeHoverEvents: false,
     // Component rendering
     defaultNodeColor: '#462393',
     defaultNodeType: 'circle', // 'circle' ou 'border'
@@ -57,9 +63,11 @@ export default function SigmaPlus(options) {
     labelFont: 'Arial',
     labelSize: 12,
     labelWeight: 'normal',
+    labelColor: { color: '#000' },
     edgeLabelFont: 'Arial',
-    edgeLabelSize: 14,
+    edgeLabelSize: 12,
     edgeLabelWeight: 'normal',
+    edgeLabelColor: { attribute: 'color' },
     stagePadding: 30,
     // Labels
     labelDensity: 0.1,
@@ -69,6 +77,8 @@ export default function SigmaPlus(options) {
     zIndex: true,
     minCameraRatio: null,
     maxCameraRatio: null,
+    // Lifecycle
+    allowInvalidContainer: false,
     // Reducers
     nodeReducer: nodeReducer,
     edgeReducer: edgeReducer,
@@ -277,6 +287,7 @@ export default function SigmaPlus(options) {
   function edgeReducer (edge, data) {
     let greyed = false
     let hidden = false
+    let highlighted = false
     let node = state.hoveredNode || state.selectedNode
     // Verificando se as arestas devem ser impressas
     if (settings.renderEdges) {
@@ -289,6 +300,8 @@ export default function SigmaPlus(options) {
         } else {
           hidden = true
         }
+      } else if (node && components.graph.hasExtremity(edge, node)) {
+        highlighted = true
       }
     } else {
       hidden = true
@@ -296,13 +309,14 @@ export default function SigmaPlus(options) {
       // a algum nó selecionado ou sobreposto
       if (node && components.graph.hasExtremity(edge, node)) {
         hidden = false
+        highlighted = true
       }
     }
 
     return {
       ...data,
       hidden,
-      color: greyed ? settings.greyedEdgeColor : data.color,
+      color: greyed ? settings.greyedEdgeColor : highlighted ? settings.highlightedEdgeColor || data.color : data.color,
       zIndex: greyed ? 0 : 1
     }
   }
@@ -349,7 +363,9 @@ export default function SigmaPlus(options) {
     const font = config.labelFont
     const weight = highlighted ? 'bold' : config.labelWeight
 
-    context.fillStyle = highlighted ? '#000' : config.defaultLabelColor
+    context.fillStyle = highlighted
+      ? settings.highlightedLabelColor || settings.defaultLabelColor || config.labelColor.color
+      : settings.defaultLabelColor || config.labelColor.color
     context.font = `${weight} ${size}px ${font}`
 
     context.fillText(data.label, data.x + data.size + 5, data.y + size / 3)
@@ -546,7 +562,7 @@ export default function SigmaPlus(options) {
    * Observa o redimensionamento do container do grafo e chama o resize da Sigma
    */
   resizeObserver = createResizeObserver(settings.container, () => {
-    components.sigma && components.sigma.resize()
+    components.sigma && components.sigma.resize() && components.sigma.refresh()
   })
   /**
    * Trata o evento enterNode da Sigma
